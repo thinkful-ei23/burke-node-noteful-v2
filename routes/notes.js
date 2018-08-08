@@ -61,6 +61,9 @@ router.get('/:id', (req, res, next) => {
 // Put update an item
 router.put('/:id', (req, res, next) => {
   const id = req.params.id;
+  const { title, content, folderId } = req.body;
+
+  console.log('THIS IS THE REQUEST BODY: ', req.body);
 
   /***** Never trust users - validate input *****/
   const updateObj = {};
@@ -72,6 +75,12 @@ router.put('/:id', (req, res, next) => {
     }
   });
 
+  if (folderId) {
+    updateObj['folder_id'] = folderId;
+  }
+
+  console.log('THIS IS WHAT THE UPDATE OBJ LOOKS LIKE: ', updateObj);
+
   /***** Never trust users - validate input *****/
   if (!updateObj.title) {
     const err = new Error('Missing `title` in request body');
@@ -82,10 +91,9 @@ router.put('/:id', (req, res, next) => {
   // first query updates the note
   // return certain stuff
   //  the second query selects the note and folders returns the new results. 
+
   let noteId;
-  knex
-    .select('id', 'title', 'content')
-    .from('notes')
+  knex('notes')
     .where({id: id})
     .update(updateObj)
     .returning('id')
@@ -97,6 +105,7 @@ router.put('/:id', (req, res, next) => {
         .where('notes.id', noteId);
     })
     .then(results => {
+      console.log(results);
       if (results.length) {
         res.json(results[0]);
       } else {
